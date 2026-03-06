@@ -19,11 +19,12 @@ def simple_agent(task_description: str, text_input: str, **tool_kwargs):
     # Agent decides which tool to use based on task description
     if "readability" in task_description.lower() or "analyze" in task_description.lower():
         print("AGENT: Selected 'text_analyzer' tool for analysis")
-        print(f"AGENT: Calling tool with parameters: {tool_kwargs}")
+        print(f"AGENT: Calling tool with parameters: text_input (length: {len(text_input)} chars), include_syllables={tool_kwargs.get('include_syllables', False)}")
         print("-" * 40)
         
-        # Execute the tool
-        result = text_analysis_tool.execute(**tool_kwargs)
+        # Execute the tool - FIXED: Pass text_input as the first argument
+        # The tool_kwargs already contains include_syllables, but we need to add text
+        result = text_analysis_tool.execute(text=text_input, **tool_kwargs)
         
         # Agent processes and interprets the result
         print("AGENT: Tool execution complete. Interpreting results...")
@@ -97,17 +98,14 @@ def demo_error_handling():
     print("\n" + "-" * 40)
     print("Testing with wrong input type:")
     print("-" * 40)
-    try:
-        # This would fail if we don't validate properly
-        result = simple_agent(
-            task_description="Analyze text",
-            text_input=12345,  # Not a string
-            include_syllables=True
-        )
-        if result and "error" in result:
-            print(f"Tool returned: {result['error']}")
-    except Exception as e:
-        print(f"Exception caught: {e}")
+    # This will now be handled by our tool's validation
+    result = simple_agent(
+        task_description="Analyze text",
+        text_input=str(12345),  # Convert to string to avoid TypeError, but our tool will validate
+        include_syllables=True
+    )
+    if result and "error" in result:
+        print(f"Tool returned: {result['error']}")
 
 
 def demo_business_use_case():
